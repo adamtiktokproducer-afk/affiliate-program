@@ -26,6 +26,87 @@
             margin: 0 auto;
         }
 
+        /* Loading screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loading-screen.hidden {
+            display: none;
+        }
+
+        .loading-spinner-big {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f0f0f0;
+            border-top-color: #000000;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Main content - hidden by default */
+        .main-content {
+            display: none;
+        }
+
+        .main-content.visible {
+            display: block;
+        }
+
+        /* Header with logout */
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .admin-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .admin-info .admin-email {
+            background-color: #f5f5f5;
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+
+        .logout-btn {
+            background-color: #ef4444;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+
+        .logout-btn:hover {
+            background-color: #dc2626;
+        }
+
         h1 {
             text-align: center;
             font-size: 36px;
@@ -58,6 +139,11 @@
 
         .add-button:hover {
             background-color: #333333;
+        }
+
+        .add-button:disabled {
+            background-color: #999;
+            cursor: not-allowed;
         }
 
         .input-group {
@@ -134,9 +220,14 @@
         }
 
         .marketer-row .link {
-            word-break: break-all;
             color: #0066cc;
-            text-align: center;
+            text-align: left;
+            direction: ltr;
+            white-space: nowrap;
+            overflow: hidden;
+            max-width: 100%;
+            cursor: text;
+            user-select: text;
         }
 
         .marketer-row .actions {
@@ -473,6 +564,34 @@
             border-color: #666666;
         }
 
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 140px;
+            right: 20px;
+            background-color: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            z-index: 9999;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast.success {
+            background-color: #22c55e;
+        }
+
+        .toast.error {
+            background-color: #ef4444;
+        }
+
         @media (max-width: 768px) {
             .add-marketer-section {
                 flex-direction: column;
@@ -498,133 +617,314 @@
             .modal-content {
                 min-width: 90%;
             }
+
+            .header-bar {
+                flex-direction: column;
+                gap: 15px;
+            }
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <h1>ניהול משווקים</h1>
-
-        <div class="add-marketer-section">
-            <button class="add-button" onclick="addMarketer()">הוסף משווק</button>
-            <div class="input-group">
-                <input type="text" id="marketerName" placeholder="שם המשווק החדש">
-                <input type="text" id="referralLink" placeholder="קישור הפניה">
-            </div>
-        </div>
-
-        <div class="table-header">
-            <div>שם</div>
-            <div>קישור הפניה</div>
-            <div>מכירות</div>
-            <div>רווח עמלה</div>
-            <div>פעולות</div>
-        </div>
-
-        <div class="content-area" id="marketersList">
-            <!-- Marketer rows will be added here dynamically -->
-        </div>
-
-        <div class="total-marketers">
-            סה"כ משווקים: <span id="totalCount">0</span>
-        </div>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-spinner-big"></div>
     </div>
 
-    <!-- Edit Modal -->
-    <div class="modal" id="editModal">
-        <div class="modal-content">
-            <h2>עריכת משווק</h2>
-            <div class="form-group">
-                <label>שם המשווק</label>
-                <input type="text" id="editName">
-            </div>
-            <div class="form-group">
-                <label>קישור הפניה</label>
-                <input type="text" id="editLink">
-            </div>
-            <div class="sales-section">
-                <div class="sales-info">
-                    <label>מכירות נוכחיות</label>
-                    <strong id="currentSales">0</strong>
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <div class="container">
+            <!-- Header with admin info and logout -->
+            <div class="header-bar">
+                <div class="admin-info">
+                    <span>מחובר כ:</span>
+                    <span class="admin-email" id="adminEmail">-</span>
                 </div>
-                <div class="sales-buttons">
-                    <button class="add-sale-btn" onclick="addSaleFromModal()">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                            style="width: 18px; height: 18px;">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                        </svg>
-                        הוסף מכירה
-                    </button>
-                    <button class="remove-sale-btn" onclick="removeSaleFromModal()" id="removeSaleBtn">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                            style="width: 18px; height: 18px;">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
-                        </svg>
-                        הורד מכירה
-                    </button>
+                <button class="logout-btn" onclick="logout()">התנתק</button>
+            </div>
+
+            <h1>ניהול משווקים</h1>
+
+            <div class="add-marketer-section">
+                <button class="add-button" onclick="addMarketer()" id="addMarketerBtn">הוסף משווק</button>
+                <div class="input-group">
+                    <input type="text" id="marketerName" placeholder="שם המשווק החדש">
+                    <input type="text" id="referralLink" placeholder="קישור הפניה">
                 </div>
             </div>
-            <div class="modal-buttons">
-                <button class="save-btn" onclick="saveEdit()">שמור</button>
-                <button class="cancel-btn" onclick="closeModal()">ביטול</button>
+
+            <div class="table-header">
+                <div>שם</div>
+                <div>קישור הפניה</div>
+                <div>מכירות</div>
+                <div>רווח עמלה</div>
+                <div>פעולות</div>
             </div>
+
+            <div class="content-area" id="marketersList">
+                <!-- Marketer rows will be added here dynamically -->
+            </div>
+
+            <div class="total-marketers">
+                סה"כ משווקים: <span id="totalCount">0</span>
+            </div>
+        </div>
+
+        <!-- Edit Modal -->
+        <div class="modal" id="editModal">
+            <div class="modal-content">
+                <h2>עריכת משווק</h2>
+                <div class="form-group">
+                    <label>שם המשווק</label>
+                    <input type="text" id="editName">
+                </div>
+                <div class="form-group">
+                    <label>קישור הפניה</label>
+                    <input type="text" id="editLink">
+                </div>
+                <div class="sales-section">
+                    <div class="sales-info">
+                        <label>מכירות נוכחיות</label>
+                        <strong id="currentSales">0</strong>
+                    </div>
+                    <div class="sales-buttons">
+                        <button class="add-sale-btn" onclick="addSaleFromModal()">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" style="width: 18px; height: 18px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 4v16m8-8H4" />
+                            </svg>
+                            הוסף מכירה
+                        </button>
+                        <button class="remove-sale-btn" onclick="removeSaleFromModal()" id="removeSaleBtn">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" style="width: 18px; height: 18px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+                            </svg>
+                            הורד מכירה
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-buttons">
+                    <button class="save-btn" onclick="saveEdit()">שמור</button>
+                    <button class="cancel-btn" onclick="closeModal()">ביטול</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Price Edit Modal -->
+        <div class="modal" id="priceModal">
+            <div class="modal-content">
+                <h2>תמחור המוצר</h2>
+                <div class="form-group">
+                    <label>מחיר המוצר (ש"ח)</label>
+                    <input type="number" id="editPrice" min="0" step="0.01">
+                </div>
+                <div class="modal-buttons">
+                    <button class="save-btn" onclick="savePrice()">שמור</button>
+                    <button class="cancel-btn" onclick="closePriceModal()">ביטול</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Marketers List Modal -->
+        <div class="modal" id="marketersListModal">
+            <div class="modal-content marketers-list-modal">
+                <h2>רשימת משווקים</h2>
+                <div id="marketersListContent">
+                    <!-- Marketers list will be populated here -->
+                </div>
+                <div class="modal-buttons">
+                    <button class="cancel-btn" onclick="closeMarketersListModal()">סגור</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Marketers List Button -->
+        <button class="marketers-list-btn" onclick="openMarketersListModal()" title="רשימת משווקים">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+        </button>
+
+        <!-- Price Edit Button -->
+        <button class="price-edit-btn" onclick="openPriceModal()" title="עריכת תמחור המוצר">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+            </svg>
+        </button>
+
+        <!-- Price Display -->
+        <div class="price-display" id="priceDisplay">
+            מחיר מוצר: <span id="currentPrice">297</span>₪
         </div>
     </div>
 
-    <!-- Price Edit Modal -->
-    <div class="modal" id="priceModal">
-        <div class="modal-content">
-            <h2>תמחור המוצר</h2>
-            <div class="form-group">
-                <label>מחיר המוצר (ש"ח)</label>
-                <input type="number" id="editPrice" min="0" step="0.01">
-            </div>
-            <div class="modal-buttons">
-                <button class="save-btn" onclick="savePrice()">שמור</button>
-                <button class="cancel-btn" onclick="closePriceModal()">ביטול</button>
-            </div>
-        </div>
-    </div>
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
 
-    <!-- Marketers List Modal -->
-    <div class="modal" id="marketersListModal">
-        <div class="modal-content marketers-list-modal">
-            <h2>רשימת משווקים</h2>
-            <div id="marketersListContent">
-                <!-- Marketers list will be populated here -->
-            </div>
-            <div class="modal-buttons">
-                <button class="cancel-btn" onclick="closeMarketersListModal()">סגור</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Marketers List Button -->
-    <button class="marketers-list-btn" onclick="openMarketersListModal()" title="רשימת משווקים">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-        </svg>
-    </button>
-
-    <!-- Price Edit Button -->
-    <button class="price-edit-btn" onclick="openPriceModal()" title="עריכת תמחור המוצר">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-        </svg>
-    </button>
-
-    <!-- Price Display -->
-    <div class="price-display" id="priceDisplay">
-        מחיר מוצר: <span id="currentPrice">297</span>₪
-    </div>
-
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
+        // Supabase configuration
+        const SUPABASE_URL = 'https://qtpblouowvyinerzaxaz.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0cGJsb3Vvd3Z5aW5lcnpheGF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0NjM5NzgsImV4cCI6MjA4MDAzOTk3OH0.BKRxWxyOn4mY9xZ2n1A5Qgj_WUPtQ0GVqrdY1SOyr5o';
+
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         let marketers = [];
         let editingId = null;
         let PRODUCT_PRICE = 297;
         const COMMISSION_RATE = 0.5; // 50%
+        let currentAdminEmail = null;
+
+        // Show toast notification
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast ' + type + ' show';
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Check if email is in admins table
+        async function checkIfAdmin(email) {
+            const { data, error } = await supabase
+                .from('admins')
+                .select('email')
+                .eq('email', email.toLowerCase().trim())
+                .single();
+
+            return !error && data;
+        }
+
+        // Check authentication
+        async function checkAuth() {
+            const adminEmail = localStorage.getItem('adminEmail');
+
+            if (!adminEmail) {
+                window.location.href = 'login.html';
+                return false;
+            }
+
+            // Verify admin is still in the database
+            const isAdmin = await checkIfAdmin(adminEmail);
+            if (!isAdmin) {
+                localStorage.removeItem('adminEmail');
+                window.location.href = 'login.html';
+                return false;
+            }
+
+            currentAdminEmail = adminEmail;
+            document.getElementById('adminEmail').textContent = currentAdminEmail;
+            return true;
+        }
+
+        // Logout function
+        function logout() {
+            localStorage.removeItem('adminEmail');
+            window.location.href = 'login.html';
+        }
+
+        // Load settings from Supabase
+        async function loadSettings() {
+            const { data, error } = await supabase
+                .from('settings')
+                .select('key, value');
+
+            if (!error && data) {
+                const priceData = data.find(s => s.key === 'product_price');
+                if (priceData) {
+                    PRODUCT_PRICE = parseFloat(priceData.value);
+                }
+            }
+        }
+
+        // Save price to Supabase
+        async function savePriceToSupabase(newPrice) {
+            const { error } = await supabase
+                .from('settings')
+                .upsert({ key: 'product_price', value: newPrice.toString() }, { onConflict: 'key' });
+
+            if (error) {
+                console.error('Error saving price:', error);
+                showToast('שגיאה בשמירת המחיר', 'error');
+                return false;
+            }
+            return true;
+        }
+
+        // Load marketers from Supabase
+        async function loadMarketers() {
+            const { data, error } = await supabase
+                .from('marketers')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error('Error loading marketers:', error);
+                showToast('שגיאה בטעינת המשווקים', 'error');
+                return;
+            }
+
+            marketers = data || [];
+            updateDisplay();
+        }
+
+        // Save marketer to Supabase
+        async function saveMarketerToSupabase(marketer) {
+            const { data, error } = await supabase
+                .from('marketers')
+                .insert([{
+                    name: marketer.name,
+                    link: marketer.link,
+                    sales: marketer.sales,
+                    commission: marketer.commission
+                }])
+                .select()
+                .single();
+
+            if (error) {
+                console.error('Error saving marketer:', error);
+                showToast('שגיאה בהוספת המשווק', 'error');
+                return null;
+            }
+
+            return data;
+        }
+
+        // Update marketer in Supabase
+        async function updateMarketerInSupabase(id, updates) {
+            const { error } = await supabase
+                .from('marketers')
+                .update(updates)
+                .eq('id', id);
+
+            if (error) {
+                console.error('Error updating marketer:', error);
+                showToast('שגיאה בעדכון המשווק', 'error');
+                return false;
+            }
+            return true;
+        }
+
+        // Delete marketer from Supabase
+        async function deleteMarketerFromSupabase(id) {
+            const { error } = await supabase
+                .from('marketers')
+                .delete()
+                .eq('id', id);
+
+            if (error) {
+                console.error('Error deleting marketer:', error);
+                showToast('שגיאה במחיקת המשווק', 'error');
+                return false;
+            }
+            return true;
+        }
 
         // Update price display
         function updatePriceDisplay() {
@@ -659,7 +959,7 @@
             container.innerHTML = marketers.map(marketer => `
                 <div class="marketer-list-item" onclick="goToMarketerPage(${marketer.id})">
                     <div class="name">${marketer.name}</div>
-                    <div class="stats">מכירות: ${marketer.sales} | רווח עמלה: ${marketer.commission.toFixed(2)}₪</div>
+                    <div class="stats">מכירות: ${marketer.sales} | רווח עמלה: ${parseFloat(marketer.commission).toFixed(2)}₪</div>
                 </div>
             `).join('');
         }
@@ -668,42 +968,23 @@
             window.location.href = `marketer.html?id=${id}`;
         }
 
-        function savePrice() {
+        async function savePrice() {
             const newPrice = parseFloat(document.getElementById('editPrice').value);
             if (isNaN(newPrice) || newPrice < 0) {
                 alert('אנא הכנס מחיר תקין');
                 return;
             }
-            PRODUCT_PRICE = newPrice;
-            updatePriceDisplay();
-            saveToLocalStorage();
-            closePriceModal();
-        }
 
-        function saveToLocalStorage() {
-            localStorage.setItem('marketers', JSON.stringify(marketers));
-            localStorage.setItem('productPrice', PRODUCT_PRICE.toString());
-        }
-
-        function loadFromLocalStorage() {
-            const savedMarketers = localStorage.getItem('marketers');
-            const savedPrice = localStorage.getItem('productPrice');
-            
-            if (savedMarketers) {
-                try {
-                    marketers = JSON.parse(savedMarketers);
-                } catch (e) {
-                    console.error('Error loading marketers:', e);
-                }
-            }
-            
-            if (savedPrice) {
-                PRODUCT_PRICE = parseFloat(savedPrice);
+            const success = await savePriceToSupabase(newPrice);
+            if (success) {
+                PRODUCT_PRICE = newPrice;
                 updatePriceDisplay();
+                showToast('המחיר נשמר בהצלחה');
+                closePriceModal();
             }
         }
 
-        function addMarketer() {
+        async function addMarketer() {
             const name = document.getElementById('marketerName').value.trim();
             const link = document.getElementById('referralLink').value.trim();
 
@@ -712,26 +993,38 @@
                 return;
             }
 
+            document.getElementById('addMarketerBtn').disabled = true;
+
             const marketer = {
-                id: Date.now(),
                 name: name,
                 link: link,
                 sales: 0,
                 commission: 0
             };
 
-            marketers.push(marketer);
-            updateDisplay();
+            const savedMarketer = await saveMarketerToSupabase(marketer);
 
-            // Clear inputs
-            document.getElementById('marketerName').value = '';
-            document.getElementById('referralLink').value = '';
+            if (savedMarketer) {
+                marketers.unshift(savedMarketer);
+                updateDisplay();
+                showToast('המשווק נוסף בהצלחה');
+
+                // Clear inputs
+                document.getElementById('marketerName').value = '';
+                document.getElementById('referralLink').value = '';
+            }
+
+            document.getElementById('addMarketerBtn').disabled = false;
         }
 
-        function deleteMarketer(id) {
+        async function deleteMarketer(id) {
             if (confirm('האם אתה בטוח שברצונך למחוק את המשווק?')) {
-                marketers = marketers.filter(m => m.id !== id);
-                updateDisplay();
+                const success = await deleteMarketerFromSupabase(id);
+                if (success) {
+                    marketers = marketers.filter(m => m.id !== id);
+                    updateDisplay();
+                    showToast('המשווק נמחק בהצלחה');
+                }
             }
         }
 
@@ -746,22 +1039,30 @@
             }
         }
 
-        function addSaleFromModal() {
+        async function addSaleFromModal() {
             if (editingId !== null) {
-                addSale(editingId);
+                await addSale(editingId);
                 updateSalesDisplay();
             }
         }
 
-        function removeSaleFromModal() {
+        async function removeSaleFromModal() {
             if (editingId !== null) {
                 const marketer = marketers.find(m => m.id === editingId);
                 if (marketer && marketer.sales > 0) {
                     marketer.sales -= 1;
-                    // Recalculate commission based on current sales
                     marketer.commission = marketer.sales * PRODUCT_PRICE * COMMISSION_RATE;
-                    updateDisplay();
-                    updateSalesDisplay();
+
+                    const success = await updateMarketerInSupabase(editingId, {
+                        sales: marketer.sales,
+                        commission: marketer.commission
+                    });
+
+                    if (success) {
+                        updateDisplay();
+                        updateSalesDisplay();
+                        showToast('מכירה הורדה בהצלחה');
+                    }
                 }
             }
         }
@@ -775,17 +1076,7 @@
             }
         }
 
-        function removeSale(id) {
-            const marketer = marketers.find(m => m.id === id);
-            if (marketer && marketer.sales > 0) {
-                marketer.sales -= 1;
-                // Recalculate commission based on current sales
-                marketer.commission = marketer.sales * PRODUCT_PRICE * COMMISSION_RATE;
-                updateDisplay();
-            }
-        }
-
-        function saveEdit() {
+        async function saveEdit() {
             const name = document.getElementById('editName').value.trim();
             const link = document.getElementById('editLink').value.trim();
 
@@ -794,12 +1085,17 @@
                 return;
             }
 
-            const marketer = marketers.find(m => m.id === editingId);
-            if (marketer) {
-                marketer.name = name;
-                marketer.link = link;
-                updateDisplay();
-                closeModal();
+            const success = await updateMarketerInSupabase(editingId, { name, link });
+
+            if (success) {
+                const marketer = marketers.find(m => m.id === editingId);
+                if (marketer) {
+                    marketer.name = name;
+                    marketer.link = link;
+                    updateDisplay();
+                    showToast('המשווק עודכן בהצלחה');
+                    closeModal();
+                }
             }
         }
 
@@ -808,12 +1104,21 @@
             editingId = null;
         }
 
-        function addSale(id) {
+        async function addSale(id) {
             const marketer = marketers.find(m => m.id === id);
             if (marketer) {
                 marketer.sales += 1;
-                marketer.commission += PRODUCT_PRICE * COMMISSION_RATE;
-                updateDisplay();
+                marketer.commission = marketer.sales * PRODUCT_PRICE * COMMISSION_RATE;
+
+                const success = await updateMarketerInSupabase(id, {
+                    sales: marketer.sales,
+                    commission: marketer.commission
+                });
+
+                if (success) {
+                    updateDisplay();
+                    showToast('מכירה נוספה בהצלחה');
+                }
             }
         }
 
@@ -822,7 +1127,6 @@
             const totalCount = document.getElementById('totalCount');
 
             totalCount.textContent = marketers.length;
-            saveToLocalStorage(); // Save to localStorage whenever display is updated
 
             if (marketers.length === 0) {
                 listContainer.innerHTML = '';
@@ -832,9 +1136,9 @@
             listContainer.innerHTML = marketers.map(marketer => `
                 <div class="marketer-row">
                     <div class="name">${marketer.name}</div>
-                    <div class="link">${marketer.link}</div>
+                    <div class="link" title="${marketer.link}">${marketer.link}</div>
                     <div>${marketer.sales}</div>
-                    <div>${marketer.commission.toFixed(2)}₪</div>
+                    <div>${parseFloat(marketer.commission).toFixed(2)}₪</div>
                     <div class="actions">
                         <button class="action-btn edit-btn" onclick="editMarketer(${marketer.id})" title="עריכה">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -883,10 +1187,22 @@
             }
         });
 
-        // Initialize - load from localStorage and update display
-        loadFromLocalStorage();
-        updateDisplay();
-        updatePriceDisplay();
+        // Initialize
+        async function init() {
+            const isAuthed = await checkAuth();
+            if (!isAuthed) return;
+
+            await loadSettings();
+            await loadMarketers();
+
+            // Hide loading screen and show content
+            document.getElementById('loadingScreen').classList.add('hidden');
+            document.getElementById('mainContent').classList.add('visible');
+
+            updatePriceDisplay();
+        }
+
+        init();
     </script>
 </body>
 

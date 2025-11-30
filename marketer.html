@@ -98,6 +98,22 @@
             color: #666666;
         }
 
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f0f0f0;
+            border-top-color: #000000;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
         .link-box {
             background-color: #f9fafb;
             border: 2px solid #e5e7eb;
@@ -187,6 +203,32 @@
             font-weight: 600;
         }
 
+        .error-box {
+            background-color: #fee2e2;
+            border: 1px solid #ef4444;
+            color: #dc2626;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .refresh-btn {
+            background-color: #000000;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 15px;
+            transition: background-color 0.2s;
+        }
+
+        .refresh-btn:hover {
+            background-color: #333333;
+        }
+
         @media (max-width: 768px) {
             .stats-grid {
                 grid-template-columns: 1fr;
@@ -197,7 +239,17 @@
 
 <body>
     <div class="container">
-        <div id="loading" class="loading">טוען נתונים...</div>
+        <div id="loading" class="loading">
+            <div class="loading-spinner"></div>
+            טוען נתונים...
+        </div>
+
+        <div id="error" style="display: none;">
+            <div class="error-box">
+                <p id="errorMessage">משווק לא נמצא</p>
+                <button class="refresh-btn" onclick="location.reload()">נסה שוב</button>
+            </div>
+        </div>
 
         <div id="content" style="display: none;">
             <div class="header">
@@ -231,81 +283,68 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
+        // Supabase configuration
+        const SUPABASE_URL = 'https://qtpblouowvyinerzaxaz.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0cGJsb3Vvd3Z5aW5lcnpheGF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0NjM5NzgsImV4cCI6MjA4MDAzOTk3OH0.BKRxWxyOn4mY9xZ2n1A5Qgj_WUPtQ0GVqrdY1SOyr5o';
+
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         // Get marketer ID from URL
         const urlParams = new URLSearchParams(window.location.search);
-        const marketerId = parseInt(urlParams.get('id'));
+        const marketerId = urlParams.get('id');
 
-        // Load marketers data from localStorage or use default
-        function loadMarketerData() {
-            // Try to get from localStorage first
-            const savedMarketers = localStorage.getItem('marketers');
-            let marketers = [];
-
-            if (savedMarketers) {
-                try {
-                    marketers = JSON.parse(savedMarketers);
-                } catch (e) {
-                    console.error('Error parsing marketers data:', e);
-                    document.getElementById('loading').innerHTML = '<div class="info-text">שגיאה בטעינת הנתונים</div>';
-                    return;
-                }
-            }
-
-            if (!marketerId || isNaN(marketerId)) {
-                document.getElementById('loading').innerHTML = '<div class="info-text">משווק לא נמצא - ID לא תקין</div>';
-                return;
-            }
-
-            // Find the marketer - compare both as numbers to handle string/number mismatch
-            const marketer = marketers.find(m => Number(m.id) === Number(marketerId));
-
-            if (!marketer) {
-                console.log('Marketer ID searched:', marketerId);
-                console.log('Available marketers:', marketers);
-                document.getElementById('loading').innerHTML = '<div class="info-text">משווק לא נמצא</div>';
-                return;
-            }
-
-            // Display welcome message
-            document.getElementById('welcomeText').textContent = `ברוך הבא ${marketer.name}`;
-
-            // Display referral link
-            document.getElementById('referralLinkInput').value = marketer.link;
-
-            // Display sales and profit in separate boxes
-            const sales = marketer.sales || 0;
-            const profit = marketer.commission || 0;
-
-            document.getElementById('salesValue').textContent = sales;
-            document.getElementById('profitValue').textContent = profit.toFixed(2) + '₪';
-
+        // Show error
+        function showError(message) {
             document.getElementById('loading').style.display = 'none';
-            document.getElementById('content').style.display = 'block';
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('errorMessage').textContent = message;
         }
 
-        // Load data on page load
-        loadMarketerData();
-
-        // Also listen for storage changes (in case data is updated)
-        window.addEventListener('storage', function (e) {
-            if (e.key === 'marketers') {
-                loadMarketerData();
+        // Load marketer data from Supabase
+        async function loadMarketerData() {
+            if (!marketerId) {
+                showError('משווק לא נמצא - ID לא תקין');
+                return;
             }
-        });
 
-        // Also listen for custom storage event (for same-tab updates)
-        window.addEventListener('storageUpdated', function () {
-            loadMarketerData();
-        });
+            try {
+                // Get marketer data
+                const { data: marketer, error } = await supabase
+                    .from('marketers')
+                    .select('*')
+                    .eq('id', marketerId)
+                    .single();
 
-        // Try to reload after a short delay in case localStorage wasn't ready
-        setTimeout(function () {
-            const content = document.getElementById('content');
-            if (content.style.display === 'none') {
-                loadMarketerData();
+                if (error || !marketer) {
+                    console.error('Error loading marketer:', error);
+                    showError('משווק לא נמצא');
+                    return;
+                }
+
+                // Display welcome message
+                document.getElementById('welcomeText').textContent = `ברוך הבא ${marketer.name}`;
+
+                // Display referral link
+                document.getElementById('referralLinkInput').value = marketer.link;
+
+                // Display sales and profit
+                const sales = marketer.sales || 0;
+                const profit = parseFloat(marketer.commission) || 0;
+
+                document.getElementById('salesValue').textContent = sales;
+                document.getElementById('profitValue').textContent = profit.toFixed(2) + '₪';
+
+                // Hide loading, show content
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+
+            } catch (err) {
+                console.error('Error:', err);
+                showError('שגיאה בטעינת הנתונים');
             }
-        }, 100);
+        }
 
         // Copy link function
         function copyLink() {
@@ -340,6 +379,35 @@
             }
         }
 
+        // Subscribe to realtime updates for this marketer
+        function subscribeToUpdates() {
+            if (!marketerId) return;
+
+            supabase
+                .channel('marketer-updates')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: 'UPDATE',
+                        schema: 'public',
+                        table: 'marketers',
+                        filter: `id=eq.${marketerId}`
+                    },
+                    (payload) => {
+                        const marketer = payload.new;
+                        document.getElementById('salesValue').textContent = marketer.sales || 0;
+                        document.getElementById('profitValue').textContent = (parseFloat(marketer.commission) || 0).toFixed(2) + '₪';
+                    }
+                )
+                .subscribe();
+        }
+
+        // Initialize
+        loadMarketerData();
+        subscribeToUpdates();
+
+        // Refresh data every 30 seconds as backup
+        setInterval(loadMarketerData, 30000);
     </script>
 </body>
 
