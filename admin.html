@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ניהול משווקים</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #ffffff;
+            color: #000000;
+            padding: 40px 20px;
+            padding-bottom: 120px;
+            direction: rtl;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Loading screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loading-screen.hidden {
+            display: none;
+        }
+
+        .loading-spinner-big {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f0f0f0;
+            border-top-color: #000000;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Login Screen */
+        .login-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            justify-content: center;
+            align-items: center;
+            z-index: 9998;
+        }
+
+        .login-screen.visible {
+            display: flex;
+        }
+
+        .login-container {
+            background-color: #ffffff;
+            padding: 50px 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 420px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .login-container .icon {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+
+        .login-container .icon svg {
+            width: 35px;
+            height: 35px;
+            color: white;
+        }
+
+        .login-container h2 {
+            font-size: 28px;
+            color: #1a1a2e;
+            margin-bottom: 10px;
+        }
+
+        .login-container p {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 30px;
+        }
+
+        .login-container input[type="email"] {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            margin-bottom: 15px;
+            text-align: right;
+        }
+
+        .login-container input[type="email"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        .login-container .login-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .login-container .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .login-container .login-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .login-message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .login-message.error {
+            display: block;
+            background-color: #fee2e2;
+            border: 1px solid #ef4444;
+            color: #dc2626;
+        }
+
+        .login-message.success {
+            display: block;
+            background-color: #dcfce7;
+            border: 1px solid #22c55e;
+            color: #16a34a;
+        }
+
+        .login-spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        /* Main content - hidden by default */
+        .main-content {
+            display: none;
+        }
+
+        .main-content.visible {
+            display: block;
+        }
+
+        /* Header with logout */
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .admin-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .admin-info .admin-email {
+            background-color: #f5f5f5;
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+
+        .logout-btn {
+            background-color: #ef4444;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+
+        .logout-btn:hover {
+            background-color: #dc2626;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 40px;
+            color: #000000;
+        }
+
+        .add-marketer-section {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .add-button {
+            background-color: #000000;
+            color: #ffffff;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 4px;
+            white-space: nowrap;
+            transition: background-color 0.2s;
+        }
+
+        .add-button:hover {
+            background-color: #333333;
+        }
+
+        .add-button:disabled {
+            background-color: #999;
+            cursor: not-allowed;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 15px;
+            flex: 1;
+            min-width: 300px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #d0d0d0;
+            border-radius: 4px;
+            font-size: 16px;
+            background-color: #ffffff;
+            color: #000000;
+        }
+
+        input[type="text"]::placeholder {
+            color: #999999;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #666666;
+        }
+
+        .table-header {
+            background-color: #f5f5f5;
+            padding: 15px 20px;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+            border-radius: 4px 4px 0 0;
+            font-weight: 500;
+            color: #000000;
+            margin-bottom: 0;
+        }
+
+        .table-header>div {
+            text-align: center;
+        }
+
+        .total-marketers {
+            padding: 15px 20px;
+            text-align: right;
+            color: #000000;
+            font-size: 16px;
+            background-color: #ffffff;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .content-area {
+            background-color: #ffffff;
+        }
+
+        .marketer-row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            align-items: center;
+        }
+
+        .marketer-row>div {
+            text-align: center;
+        }
+
+        .marketer-row .name {
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .marketer-row .link {
+            color: #0066cc;
+            text-align: left;
+            direction: ltr;
+            white-space: nowrap;
+            overflow: hidden;
+            max-width: 100%;
+            cursor: text;
+            user-select: text;
+        }
+
+        .marketer-row .actions {
+            justify-content: center;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .action-btn:hover {
+            background-color: #f0f0f0;
+        }
+
+        .action-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .edit-btn svg {
+            color: #0066cc;
+        }
+
+        .delete-btn-icon svg {
+            color: #ff4444;
+        }
+
+        .add-sale-btn {
+            background-color: #22c55e;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .add-sale-btn:hover {
+            background-color: #16a34a;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(34, 197, 94, 0.3);
+        }
+
+        .remove-sale-btn {
+            background-color: #ef4444;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .remove-sale-btn:hover {
+            background-color: #dc2626;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+        }
+
+        .remove-sale-btn:disabled {
+            background-color: #d1d5db;
+            color: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .sales-section {
+            margin-top: 25px;
+            padding-top: 25px;
+            border-top: 2px solid #e5e7eb;
+        }
+
+        .sales-info {
+            background-color: #f9fafb;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .sales-info label {
+            display: block;
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 5px;
+        }
+
+        .sales-info strong {
+            font-size: 24px;
+            color: #111827;
+            font-weight: 600;
+        }
+
+        .sales-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            min-width: 400px;
+            max-width: 90%;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .modal-content .form-group {
+            margin-bottom: 15px;
+        }
+
+        .modal-content label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #d0d0d0;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: flex-start;
+        }
+
+        .modal-buttons button {
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+        }
+
+        .save-btn {
+            background-color: #000000;
+            color: #ffffff;
+        }
+
+        .save-btn:hover {
+            background-color: #333333;
+        }
+
+        .cancel-btn {
+            background-color: #e0e0e0;
+            color: #000000;
+        }
+
+        .cancel-btn:hover {
+            background-color: #d0d0d0;
+        }
+
+        /* Marketers list button - fixed bottom right, next to price button */
+        .marketers-list-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 80px;
+            background-color: #000000;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s;
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+        }
+
+        .marketers-list-btn:hover {
+            background-color: #333333;
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+            transform: scale(1.05);
+        }
+
+        .marketers-list-btn svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        /* Marketers list modal styles */
+        .marketers-list-modal {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .marketer-list-item {
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .marketer-list-item:hover {
+            background-color: #f5f5f5;
+        }
+
+        .marketer-list-item:last-child {
+            border-bottom: none;
+        }
+
+        .marketer-list-item .name {
+            font-weight: 500;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .marketer-list-item .stats {
+            font-size: 14px;
+            color: #666666;
+        }
+
+        /* Price edit button - fixed bottom right */
+        .price-edit-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #22c55e;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s;
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+        }
+
+        .price-edit-btn:hover {
+            background-color: #16a34a;
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+            transform: scale(1.05);
+        }
+
+        .price-edit-btn svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .price-display {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            z-index: 998;
+            white-space: nowrap;
+        }
+
+        input[type="number"] {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #d0d0d0;
+            border-radius: 4px;
+            font-size: 16px;
+            background-color: #ffffff;
+            color: #000000;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #666666;
+        }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 140px;
+            right: 20px;
+            background-color: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            z-index: 9999;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast.success {
+            background-color: #22c55e;
+        }
+
+        .toast.error {
+            background-color: #ef4444;
+        }
+
+        @media (max-width: 768px) {
+            .add-marketer-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .input-group {
+                flex-direction: column;
+                min-width: 100%;
+            }
+
+            .add-button {
+                width: 100%;
+            }
+
+            .table-header,
+            .marketer-row {
+                grid-template-columns: 1fr;
+                gap: 10px;
+                font-size: 14px;
+            }
+
+            .modal-content {
+                min-width: 90%;
+            }
+
+            .header-bar {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-spinner-big"></div>
+    </div>
+
+    <!-- Login Screen -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-container">
+            <div class="icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+            </div>
+            <h2>כניסת מנהלים</h2>
+            <p>הכנס את האימייל שלך</p>
+            <div class="login-message" id="loginMessage"></div>
+            <form id="loginForm">
+                <input type="email" id="adminEmailInput" placeholder="אימייל" required>
+                <button type="submit" class="login-btn" id="loginBtn">כניסה</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <div class="container">
+            <!-- Header with admin info and logout -->
+            <div class="header-bar">
+                <div class="admin-info">
+                    <span>מחובר כ:</span>
+                    <span class="admin-email" id="adminEmail">-</span>
+                </div>
+                <button class="logout-btn" onclick="logout()">התנתק</button>
+            </div>
+
+            <h1>ניהול משווקים</h1>
+
+            <div class="add-marketer-section">
+                <button class="add-button" onclick="addMarketer()" id="addMarketerBtn">הוסף משווק</button>
+                <div class="input-group">
+                    <input type="text" id="marketerName" placeholder="שם המשווק החדש">
+                    <input type="text" id="referralLink" placeholder="קישור הפניה">
+                </div>
+            </div>
+
+            <div class="table-header">
+                <div>שם</div>
+                <div>קישור הפניה</div>
+                <div>מכירות</div>
+                <div>רווח עמלה</div>
+                <div>פעולות</div>
+            </div>
+
+            <div class="content-area" id="marketersList">
+                <!-- Marketer rows will be added here dynamically -->
+            </div>
+
+            <div class="total-marketers">
+                סה"כ משווקים: <span id="totalCount">0</span>
+            </div>
+        </div>
+
+        <!-- Edit Modal -->
+        <div class="modal" id="editModal">
+            <div class="modal-content">
+                <h2>עריכת משווק</h2>
+                <div class="form-group">
+                    <label>שם המשווק</label>
+                    <input type="text" id="editName">
+                </div>
+                <div class="form-group">
+                    <label>קישור הפניה</label>
+                    <input type="text" id="editLink">
+                </div>
+                <div class="sales-section">
+                    <div class="sales-info">
+                        <label>מכירות נוכחיות</label>
+                        <strong id="currentSales">0</strong>
+                    </div>
+                    <div class="sales-buttons">
+                        <button class="add-sale-btn" onclick="addSaleFromModal()">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" style="width: 18px; height: 18px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 4v16m8-8H4" />
+                            </svg>
+                            הוסף מכירה
+                        </button>
+                        <button class="remove-sale-btn" onclick="removeSaleFromModal()" id="removeSaleBtn">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" style="width: 18px; height: 18px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+                            </svg>
+                            הורד מכירה
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-buttons">
+                    <button class="save-btn" onclick="saveEdit()">שמור</button>
+                    <button class="cancel-btn" onclick="closeModal()">ביטול</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Price Edit Modal -->
+        <div class="modal" id="priceModal">
+            <div class="modal-content">
+                <h2>תמחור המוצר</h2>
+                <div class="form-group">
+                    <label>מחיר המוצר (ש"ח)</label>
+                    <input type="number" id="editPrice" min="0" step="0.01">
+                </div>
+                <div class="modal-buttons">
+                    <button class="save-btn" onclick="savePrice()">שמור</button>
+                    <button class="cancel-btn" onclick="closePriceModal()">ביטול</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Marketers List Modal -->
+        <div class="modal" id="marketersListModal">
+            <div class="modal-content marketers-list-modal">
+                <h2>רשימת משווקים</h2>
+                <div id="marketersListContent">
+                    <!-- Marketers list will be populated here -->
+                </div>
+                <div class="modal-buttons">
+                    <button class="cancel-btn" onclick="closeMarketersListModal()">סגור</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Marketers List Button -->
+        <button class="marketers-list-btn" onclick="openMarketersListModal()" title="רשימת משווקים">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+        </button>
+
+        <!-- Price Edit Button -->
+        <button class="price-edit-btn" onclick="openPriceModal()" title="עריכת תמחור המוצר">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+            </svg>
+        </button>
+
+        <!-- Price Display -->
+        <div class="price-display" id="priceDisplay">
+            מחיר מוצר: <span id="currentPrice">297</span>₪
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Supabase configuration
+        const SUPABASE_URL = 'https://qtpblouowvyinerzaxaz.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0cGJsb3Vvd3Z5aW5lcnpheGF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0NjM5NzgsImV4cCI6MjA4MDAzOTk3OH0.BKRxWxyOn4mY9xZ2n1A5Qgj_WUPtQ0GVqrdY1SOyr5o';
+
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let marketers = [];
+        let editingId = null;
+        let PRODUCT_PRICE = 297;
+        const COMMISSION_RATE = 0.5; // 50%
+        let currentAdminEmail = null;
+
+        // Show toast notification
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast ' + type + ' show';
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Check if email is in admins table
+        async function checkIfAdmin(email) {
+            const { data, error } = await supabase
+                .from('admins')
+                .select('email')
+                .eq('email', email.toLowerCase().trim())
+                .single();
+
+            return !error && data;
+        }
+
+        // Show login screen
+        function showLoginScreen() {
+            document.getElementById('loadingScreen').classList.add('hidden');
+            document.getElementById('loginScreen').classList.add('visible');
+        }
+
+        // Hide login screen
+        function hideLoginScreen() {
+            document.getElementById('loginScreen').classList.remove('visible');
+        }
+
+        // Show login message
+        function showLoginMessage(message, type) {
+            const msgElement = document.getElementById('loginMessage');
+            msgElement.textContent = message;
+            msgElement.className = 'login-message ' + type;
+        }
+
+        // Set login loading state
+        function setLoginLoading(isLoading) {
+            const loginBtn = document.getElementById('loginBtn');
+            if (isLoading) {
+                loginBtn.disabled = true;
+                loginBtn.innerHTML = '<span class="login-spinner"></span>בודק...';
+            } else {
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = 'כניסה';
+            }
+        }
+
+        // Check authentication
+        async function checkAuth() {
+            const adminEmail = localStorage.getItem('adminEmail');
+
+            if (!adminEmail) {
+                showLoginScreen();
+                return false;
+            }
+
+            // Verify admin is still in the database
+            const isAdmin = await checkIfAdmin(adminEmail);
+            if (!isAdmin) {
+                localStorage.removeItem('adminEmail');
+                showLoginScreen();
+                return false;
+            }
+
+            currentAdminEmail = adminEmail;
+            document.getElementById('adminEmail').textContent = currentAdminEmail;
+            return true;
+        }
+
+        // Logout function
+        function logout() {
+            localStorage.removeItem('adminEmail');
+            showLoginScreen();
+        }
+
+        // Handle login form submit
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            document.getElementById('loginMessage').className = 'login-message';
+
+            const email = document.getElementById('adminEmailInput').value.trim().toLowerCase();
+
+            if (!email) {
+                showLoginMessage('אנא הכנס אימייל', 'error');
+                return;
+            }
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showLoginMessage('אנא הכנס אימייל תקין', 'error');
+                return;
+            }
+
+            setLoginLoading(true);
+
+            try {
+                const isAdmin = await checkIfAdmin(email);
+
+                if (isAdmin) {
+                    localStorage.setItem('adminEmail', email);
+                    showLoginMessage('מתחבר...', 'success');
+
+                    currentAdminEmail = email;
+                    document.getElementById('adminEmail').textContent = currentAdminEmail;
+
+                    await loadSettings();
+                    await loadMarketers();
+
+                    setTimeout(() => {
+                        hideLoginScreen();
+                        document.getElementById('loadingScreen').classList.add('hidden');
+                        document.getElementById('mainContent').classList.add('visible');
+                        updatePriceDisplay();
+                    }, 500);
+                } else {
+                    showLoginMessage('האימייל הזה לא מורשה לגשת למערכת הניהול', 'error');
+                    setLoginLoading(false);
+                }
+
+            } catch (err) {
+                console.error('Error:', err);
+                showLoginMessage('שגיאה בבדיקת ההרשאות. נסה שוב.', 'error');
+                setLoginLoading(false);
+            }
+        });
+
+        // Load settings from Supabase
+        async function loadSettings() {
+            const { data, error } = await supabase
+                .from('settings')
+                .select('key, value');
+
+            if (!error && data) {
+                const priceData = data.find(s => s.key === 'product_price');
+                if (priceData) {
+                    PRODUCT_PRICE = parseFloat(priceData.value);
+                }
+            }
+        }
+
+        // Save price to Supabase
+        async function savePriceToSupabase(newPrice) {
+            const { error } = await supabase
+                .from('settings')
+                .upsert({ key: 'product_price', value: newPrice.toString() }, { onConflict: 'key' });
+
+            if (error) {
+                console.error('Error saving price:', error);
+                showToast('שגיאה בשמירת המחיר', 'error');
+                return false;
+            }
+            return true;
+        }
+
+        // Load marketers from Supabase
+        async function loadMarketers() {
+            const { data, error } = await supabase
+                .from('marketers')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error('Error loading marketers:', error);
+                showToast('שגיאה בטעינת המשווקים', 'error');
+                return;
+            }
+
+            marketers = data || [];
+            updateDisplay();
+        }
+
+        // Save marketer to Supabase
+        async function saveMarketerToSupabase(marketer) {
+            const { data, error } = await supabase
+                .from('marketers')
+                .insert([{
+                    name: marketer.name,
+                    link: marketer.link,
+                    sales: marketer.sales,
+                    commission: marketer.commission
+                }])
+                .select()
+                .single();
+
+            if (error) {
+                console.error('Error saving marketer:', error);
+                showToast('שגיאה בהוספת המשווק', 'error');
+                return null;
+            }
+
+            return data;
+        }
+
+        // Update marketer in Supabase
+        async function updateMarketerInSupabase(id, updates) {
+            const { error } = await supabase
+                .from('marketers')
+                .update(updates)
+                .eq('id', id);
+
+            if (error) {
+                console.error('Error updating marketer:', error);
+                showToast('שגיאה בעדכון המשווק', 'error');
+                return false;
+            }
+            return true;
+        }
+
+        // Delete marketer from Supabase
+        async function deleteMarketerFromSupabase(id) {
+            const { error } = await supabase
+                .from('marketers')
+                .delete()
+                .eq('id', id);
+
+            if (error) {
+                console.error('Error deleting marketer:', error);
+                showToast('שגיאה במחיקת המשווק', 'error');
+                return false;
+            }
+            return true;
+        }
+
+        // Update price display
+        function updatePriceDisplay() {
+            document.getElementById('currentPrice').textContent = PRODUCT_PRICE;
+        }
+
+        function openPriceModal() {
+            document.getElementById('editPrice').value = PRODUCT_PRICE;
+            document.getElementById('priceModal').classList.add('active');
+        }
+
+        function closePriceModal() {
+            document.getElementById('priceModal').classList.remove('active');
+        }
+
+        function openMarketersListModal() {
+            populateMarketersList();
+            document.getElementById('marketersListModal').classList.add('active');
+        }
+
+        function closeMarketersListModal() {
+            document.getElementById('marketersListModal').classList.remove('active');
+        }
+
+        function populateMarketersList() {
+            const container = document.getElementById('marketersListContent');
+            if (marketers.length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 20px; color: #666;">אין משווקים עדיין</p>';
+                return;
+            }
+
+            container.innerHTML = marketers.map(marketer => `
+                <div class="marketer-list-item" onclick="goToMarketerPage(${marketer.id})">
+                    <div class="name">${marketer.name}</div>
+                    <div class="stats">מכירות: ${marketer.sales} | רווח עמלה: ${parseFloat(marketer.commission).toFixed(2)}₪</div>
+                </div>
+            `).join('');
+        }
+
+        function goToMarketerPage(id) {
+            window.location.href = `index.html?id=${id}`;
+        }
+
+        async function savePrice() {
+            const newPrice = parseFloat(document.getElementById('editPrice').value);
+            if (isNaN(newPrice) || newPrice < 0) {
+                alert('אנא הכנס מחיר תקין');
+                return;
+            }
+
+            const success = await savePriceToSupabase(newPrice);
+            if (success) {
+                PRODUCT_PRICE = newPrice;
+                updatePriceDisplay();
+                showToast('המחיר נשמר בהצלחה');
+                closePriceModal();
+            }
+        }
+
+        async function addMarketer() {
+            const name = document.getElementById('marketerName').value.trim();
+            const link = document.getElementById('referralLink').value.trim();
+
+            if (!name || !link) {
+                alert('אנא מלא את כל השדות');
+                return;
+            }
+
+            document.getElementById('addMarketerBtn').disabled = true;
+
+            const marketer = {
+                name: name,
+                link: link,
+                sales: 0,
+                commission: 0
+            };
+
+            const savedMarketer = await saveMarketerToSupabase(marketer);
+
+            if (savedMarketer) {
+                marketers.unshift(savedMarketer);
+                updateDisplay();
+                showToast('המשווק נוסף בהצלחה');
+
+                // Clear inputs
+                document.getElementById('marketerName').value = '';
+                document.getElementById('referralLink').value = '';
+            }
+
+            document.getElementById('addMarketerBtn').disabled = false;
+        }
+
+        async function deleteMarketer(id) {
+            if (confirm('האם אתה בטוח שברצונך למחוק את המשווק?')) {
+                const success = await deleteMarketerFromSupabase(id);
+                if (success) {
+                    marketers = marketers.filter(m => m.id !== id);
+                    updateDisplay();
+                    showToast('המשווק נמחק בהצלחה');
+                }
+            }
+        }
+
+        function editMarketer(id) {
+            const marketer = marketers.find(m => m.id === id);
+            if (marketer) {
+                editingId = id;
+                document.getElementById('editName').value = marketer.name;
+                document.getElementById('editLink').value = marketer.link;
+                document.getElementById('editModal').classList.add('active');
+                updateSalesDisplay();
+            }
+        }
+
+        async function addSaleFromModal() {
+            if (editingId !== null) {
+                await addSale(editingId);
+                updateSalesDisplay();
+            }
+        }
+
+        async function removeSaleFromModal() {
+            if (editingId !== null) {
+                const marketer = marketers.find(m => m.id === editingId);
+                if (marketer && marketer.sales > 0) {
+                    marketer.sales -= 1;
+                    marketer.commission = marketer.sales * PRODUCT_PRICE * COMMISSION_RATE;
+
+                    const success = await updateMarketerInSupabase(editingId, {
+                        sales: marketer.sales,
+                        commission: marketer.commission
+                    });
+
+                    if (success) {
+                        updateDisplay();
+                        updateSalesDisplay();
+                        showToast('מכירה הורדה בהצלחה');
+                    }
+                }
+            }
+        }
+
+        function updateSalesDisplay() {
+            const marketer = marketers.find(m => m.id === editingId);
+            if (marketer) {
+                document.getElementById('currentSales').textContent = marketer.sales;
+                const removeBtn = document.getElementById('removeSaleBtn');
+                removeBtn.disabled = marketer.sales === 0;
+            }
+        }
+
+        async function saveEdit() {
+            const name = document.getElementById('editName').value.trim();
+            const link = document.getElementById('editLink').value.trim();
+
+            if (!name || !link) {
+                alert('אנא מלא את כל השדות');
+                return;
+            }
+
+            const success = await updateMarketerInSupabase(editingId, { name, link });
+
+            if (success) {
+                const marketer = marketers.find(m => m.id === editingId);
+                if (marketer) {
+                    marketer.name = name;
+                    marketer.link = link;
+                    updateDisplay();
+                    showToast('המשווק עודכן בהצלחה');
+                    closeModal();
+                }
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('editModal').classList.remove('active');
+            editingId = null;
+        }
+
+        async function addSale(id) {
+            const marketer = marketers.find(m => m.id === id);
+            if (marketer) {
+                marketer.sales += 1;
+                marketer.commission = marketer.sales * PRODUCT_PRICE * COMMISSION_RATE;
+
+                const success = await updateMarketerInSupabase(id, {
+                    sales: marketer.sales,
+                    commission: marketer.commission
+                });
+
+                if (success) {
+                    updateDisplay();
+                    showToast('מכירה נוספה בהצלחה');
+                }
+            }
+        }
+
+        function updateDisplay() {
+            const listContainer = document.getElementById('marketersList');
+            const totalCount = document.getElementById('totalCount');
+
+            totalCount.textContent = marketers.length;
+
+            if (marketers.length === 0) {
+                listContainer.innerHTML = '';
+                return;
+            }
+
+            listContainer.innerHTML = marketers.map(marketer => `
+                <div class="marketer-row">
+                    <div class="name">${marketer.name}</div>
+                    <div class="link" title="${marketer.link}">${marketer.link}</div>
+                    <div>${marketer.sales}</div>
+                    <div>${parseFloat(marketer.commission).toFixed(2)}₪</div>
+                    <div class="actions">
+                        <button class="action-btn edit-btn" onclick="editMarketer(${marketer.id})" title="עריכה">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                        </button>
+                        <button class="action-btn delete-btn-icon" onclick="deleteMarketer(${marketer.id})" title="מחיקה">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Allow Enter key to add marketer
+        document.getElementById('marketerName').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                addMarketer();
+            }
+        });
+
+        document.getElementById('referralLink').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                addMarketer();
+            }
+        });
+
+        // Close modal when clicking outside
+        document.getElementById('editModal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        document.getElementById('priceModal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closePriceModal();
+            }
+        });
+
+        document.getElementById('marketersListModal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeMarketersListModal();
+            }
+        });
+
+        // Initialize
+        async function init() {
+            const isAuthed = await checkAuth();
+            if (!isAuthed) return;
+
+            await loadSettings();
+            await loadMarketers();
+
+            // Hide loading screen and show content
+            document.getElementById('loadingScreen').classList.add('hidden');
+            document.getElementById('mainContent').classList.add('visible');
+
+            updatePriceDisplay();
+        }
+
+        init();
+    </script>
+</body>
+
+</html>
+

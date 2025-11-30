@@ -1,12 +1,27 @@
 # מערכת ניהול משווקים - Affiliate Marketing System
 
-מערכת לניהול משווקים ומעקב אחר מכירות עם אבטחת מנהלים פשוטה.
+מערכת לניהול משווקים ומעקב אחר מכירות.
 
-## 🔐 אבטחה
+## 🔄 איך המערכת עובדת
 
-- **דף ניהול** (`index.html`) - גישה למנהלים בלבד (לפי אימייל)
-- **דף משווק** (`marketer.html`) - נגיש לכל משווק עם הקישור שלו
-- **דף התחברות** (`login.html`) - התחברות פשוטה עם אימייל בלבד
+1. **מנהל** נכנס ל-`admin.html` ומכניס את האימייל שלו
+2. **מנהל** מוסיף משווק חדש עם שם וקישור הפניה
+3. **מנהל** משתף עם המשווק את הקישור האישי שלו: `index.html?id=X`
+4. **משווק** נכנס לקישור ורואה:
+   - "ברוך הבא [השם שלו]"
+   - הקישור הפניה שלו (עם כפתור העתקה)
+   - מספר המכירות שלו
+   - סכום הרווח שלו
+5. **מנהל** מעדכן מכירות ועמלות דרך דף הניהול
+
+## 📁 מבנה הקבצים
+
+| קובץ | תיאור |
+|------|--------|
+| `index.html?id=X` | דף אישי של משווק - מציג שם, קישור, מכירות ורווח |
+| `admin.html` | דף ניהול משווקים (למנהלים בלבד) |
+| `supabase_schema.sql` | סכמת מסד הנתונים |
+| `add_admin.sql` | סקריפט להוספת מנהלים |
 
 ## 📦 התקנה
 
@@ -19,14 +34,11 @@
 
 ### שלב 2: הוספת מנהלים
 
-1. פתח את קובץ `add_admin.sql`
-2. שנה את האימייל `'your-admin@email.com'` לאימייל המנהל שלך
-3. הרץ את ה-SQL ב-Supabase SQL Editor
+הרץ את ה-SQL הבא ב-Supabase (שנה את האימייל):
 
-דוגמה:
 ```sql
 INSERT INTO admins (email) 
-VALUES ('admin@example.com')
+VALUES ('your-email@example.com')
 ON CONFLICT (email) DO NOTHING;
 ```
 
@@ -37,7 +49,6 @@ ON CONFLICT (email) DO NOTHING;
 |------|------|--------|
 | id | UUID | מזהה ייחודי |
 | email | TEXT | אימייל המנהל |
-| created_at | TIMESTAMP | תאריך יצירה |
 
 ### marketers
 | שדה | סוג | תיאור |
@@ -47,49 +58,28 @@ ON CONFLICT (email) DO NOTHING;
 | link | TEXT | קישור הפניה |
 | sales | INTEGER | מספר מכירות |
 | commission | DECIMAL | סכום עמלה |
-| created_at | TIMESTAMP | תאריך יצירה |
-| updated_at | TIMESTAMP | תאריך עדכון |
 
 ### settings
 | שדה | סוג | תיאור |
 |------|------|--------|
-| id | UUID | מזהה ייחודי |
-| key | TEXT | מפתח ההגדרה |
-| value | TEXT | ערך ההגדרה |
-| updated_at | TIMESTAMP | תאריך עדכון |
-
-## 📁 קבצים
-
-| קובץ | תיאור |
-|------|--------|
-| `index.html` | דף ניהול משווקים (למנהלים בלבד) |
-| `marketer.html` | דף צפייה למשווקים |
-| `login.html` | דף התחברות מנהלים (אימייל בלבד) |
-| `supabase_schema.sql` | סכמת מסד הנתונים |
-| `add_admin.sql` | סקריפט להוספת מנהלים |
-
-## 🔧 איך זה עובד
-
-1. **התחברות**: המנהל מכניס את האימייל שלו
-2. **בדיקה**: המערכת בודקת אם האימייל קיים בטבלת `admins`
-3. **גישה**: אם כן - נכנס לדף הניהול, אם לא - מקבל הודעת שגיאה
-
-## 🔧 פתרון בעיות
-
-### "האימייל הזה לא מורשה לגשת למערכת הניהול"
-- וודא שהאימייל שלך קיים בטבלת `admins`
-- וודא שהאימייל מוקלד נכון (אותיות קטנות)
-
-### "משווק לא נמצא"
-- וודא שה-ID בכתובת ה-URL נכון
-- וודא שהמשווק קיים בטבלת `marketers`
+| key | TEXT | מפתח (product_price) |
+| value | TEXT | ערך (מחיר המוצר) |
 
 ## 🚀 שימוש
 
-1. הכנס את האימייל שלך בדף `login.html`
-2. הוסף משווקים חדשים עם שם וקישור הפניה
-3. שתף עם כל משווק את הקישור לדף שלו: `marketer.html?id=XXX`
-4. עקוב אחר מכירות ועדכן עמלות
+### למנהל:
+1. היכנס ל-`admin.html`
+2. הכנס את האימייל שלך
+3. הוסף משווקים חדשים
+4. שתף עם כל משווק את הקישור: `index.html?id=X`
+5. עדכן מכירות ועמלות
+
+### למשווק:
+1. קבל קישור אישי מהמנהל
+2. היכנס לקישור וראה את הסטטיסטיקות שלך
+3. העתק את קישור ההפניה שלך
+4. שווק ברשתות החברתיות
+5. קבל 50% עמלה על כל מכירה!
 
 ## 📞 תמיכה
 
