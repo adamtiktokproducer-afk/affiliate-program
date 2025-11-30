@@ -349,6 +349,70 @@
             background-color: #d0d0d0;
         }
 
+        /* Marketers list button - fixed bottom right, next to price button */
+        .marketers-list-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 80px;
+            background-color: #000000;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s;
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+        }
+
+        .marketers-list-btn:hover {
+            background-color: #333333;
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+            transform: scale(1.05);
+        }
+
+        .marketers-list-btn svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        /* Marketers list modal styles */
+        .marketers-list-modal {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .marketer-list-item {
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .marketer-list-item:hover {
+            background-color: #f5f5f5;
+        }
+
+        .marketer-list-item:last-child {
+            border-bottom: none;
+        }
+
+        .marketer-list-item .name {
+            font-weight: 500;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .marketer-list-item .stats {
+            font-size: 14px;
+            color: #666666;
+        }
+
         /* Price edit button - fixed bottom right */
         .price-edit-btn {
             position: fixed;
@@ -523,6 +587,26 @@
         </div>
     </div>
 
+    <!-- Marketers List Modal -->
+    <div class="modal" id="marketersListModal">
+        <div class="modal-content marketers-list-modal">
+            <h2>רשימת משווקים</h2>
+            <div id="marketersListContent">
+                <!-- Marketers list will be populated here -->
+            </div>
+            <div class="modal-buttons">
+                <button class="cancel-btn" onclick="closeMarketersListModal()">סגור</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Marketers List Button -->
+    <button class="marketers-list-btn" onclick="openMarketersListModal()" title="רשימת משווקים">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+    </button>
+
     <!-- Price Edit Button -->
     <button class="price-edit-btn" onclick="openPriceModal()" title="עריכת תמחור המוצר">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -556,6 +640,34 @@
             document.getElementById('priceModal').classList.remove('active');
         }
 
+        function openMarketersListModal() {
+            populateMarketersList();
+            document.getElementById('marketersListModal').classList.add('active');
+        }
+
+        function closeMarketersListModal() {
+            document.getElementById('marketersListModal').classList.remove('active');
+        }
+
+        function populateMarketersList() {
+            const container = document.getElementById('marketersListContent');
+            if (marketers.length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 20px; color: #666;">אין משווקים עדיין</p>';
+                return;
+            }
+
+            container.innerHTML = marketers.map(marketer => `
+                <div class="marketer-list-item" onclick="goToMarketerPage(${marketer.id})">
+                    <div class="name">${marketer.name}</div>
+                    <div class="stats">מכירות: ${marketer.sales} | רווח עמלה: ${marketer.commission.toFixed(2)}₪</div>
+                </div>
+            `).join('');
+        }
+
+        function goToMarketerPage(id) {
+            window.location.href = `marketer.html?id=${id}`;
+        }
+
         function savePrice() {
             const newPrice = parseFloat(document.getElementById('editPrice').value);
             if (isNaN(newPrice) || newPrice < 0) {
@@ -564,7 +676,31 @@
             }
             PRODUCT_PRICE = newPrice;
             updatePriceDisplay();
+            saveToLocalStorage();
             closePriceModal();
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('marketers', JSON.stringify(marketers));
+            localStorage.setItem('productPrice', PRODUCT_PRICE.toString());
+        }
+
+        function loadFromLocalStorage() {
+            const savedMarketers = localStorage.getItem('marketers');
+            const savedPrice = localStorage.getItem('productPrice');
+            
+            if (savedMarketers) {
+                try {
+                    marketers = JSON.parse(savedMarketers);
+                } catch (e) {
+                    console.error('Error loading marketers:', e);
+                }
+            }
+            
+            if (savedPrice) {
+                PRODUCT_PRICE = parseFloat(savedPrice);
+                updatePriceDisplay();
+            }
         }
 
         function addMarketer() {
@@ -686,6 +822,7 @@
             const totalCount = document.getElementById('totalCount');
 
             totalCount.textContent = marketers.length;
+            saveToLocalStorage(); // Save to localStorage whenever display is updated
 
             if (marketers.length === 0) {
                 listContainer.innerHTML = '';
@@ -740,7 +877,15 @@
             }
         });
 
-        // Initialize price display
+        document.getElementById('marketersListModal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeMarketersListModal();
+            }
+        });
+
+        // Initialize - load from localStorage and update display
+        loadFromLocalStorage();
+        updateDisplay();
         updatePriceDisplay();
     </script>
 </body>

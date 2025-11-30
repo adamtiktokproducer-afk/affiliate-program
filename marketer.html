@@ -243,13 +243,26 @@
             let marketers = [];
 
             if (savedMarketers) {
-                marketers = JSON.parse(savedMarketers);
+                try {
+                    marketers = JSON.parse(savedMarketers);
+                } catch (e) {
+                    console.error('Error parsing marketers data:', e);
+                    document.getElementById('loading').innerHTML = '<div class="info-text">שגיאה בטעינת הנתונים</div>';
+                    return;
+                }
             }
 
-            // Find the marketer
-            const marketer = marketers.find(m => m.id === marketerId);
+            if (!marketerId || isNaN(marketerId)) {
+                document.getElementById('loading').innerHTML = '<div class="info-text">משווק לא נמצא - ID לא תקין</div>';
+                return;
+            }
+
+            // Find the marketer - compare both as numbers to handle string/number mismatch
+            const marketer = marketers.find(m => Number(m.id) === Number(marketerId));
 
             if (!marketer) {
+                console.log('Marketer ID searched:', marketerId);
+                console.log('Available marketers:', marketers);
                 document.getElementById('loading').innerHTML = '<div class="info-text">משווק לא נמצא</div>';
                 return;
             }
@@ -263,7 +276,7 @@
             // Display sales and profit in separate boxes
             const sales = marketer.sales || 0;
             const profit = marketer.commission || 0;
-            
+
             document.getElementById('salesValue').textContent = sales;
             document.getElementById('profitValue').textContent = profit.toFixed(2) + '₪';
 
@@ -275,26 +288,39 @@
         loadMarketerData();
 
         // Also listen for storage changes (in case data is updated)
-        window.addEventListener('storage', function(e) {
+        window.addEventListener('storage', function (e) {
             if (e.key === 'marketers') {
                 loadMarketerData();
             }
         });
+
+        // Also listen for custom storage event (for same-tab updates)
+        window.addEventListener('storageUpdated', function () {
+            loadMarketerData();
+        });
+
+        // Try to reload after a short delay in case localStorage wasn't ready
+        setTimeout(function () {
+            const content = document.getElementById('content');
+            if (content.style.display === 'none') {
+                loadMarketerData();
+            }
+        }, 100);
 
         // Copy link function
         function copyLink() {
             const linkInput = document.getElementById('referralLinkInput');
             linkInput.select();
             linkInput.setSelectionRange(0, 99999); // For mobile devices
-            
+
             try {
-                navigator.clipboard.writeText(linkInput.value).then(function() {
+                navigator.clipboard.writeText(linkInput.value).then(function () {
                     const copyBtn = document.getElementById('copyBtn');
                     const originalText = copyBtn.textContent;
                     copyBtn.textContent = 'הועתק!';
                     copyBtn.classList.add('copied');
-                    
-                    setTimeout(function() {
+
+                    setTimeout(function () {
                         copyBtn.textContent = originalText;
                         copyBtn.classList.remove('copied');
                     }, 2000);
@@ -306,8 +332,8 @@
                 const originalText = copyBtn.textContent;
                 copyBtn.textContent = 'הועתק!';
                 copyBtn.classList.add('copied');
-                
-                setTimeout(function() {
+
+                setTimeout(function () {
                     copyBtn.textContent = originalText;
                     copyBtn.classList.remove('copied');
                 }, 2000);
@@ -318,4 +344,3 @@
 </body>
 
 </html>
-
