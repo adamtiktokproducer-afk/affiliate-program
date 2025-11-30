@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ניהול משווקים</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #ffffff;
+            color: #000000;
+            padding: 40px 20px;
+            padding-bottom: 120px;
+            direction: rtl;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 40px;
+            color: #000000;
+        }
+
+        .add-marketer-section {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .add-button {
+            background-color: #000000;
+            color: #ffffff;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 4px;
+            white-space: nowrap;
+            transition: background-color 0.2s;
+        }
+
+        .add-button:hover {
+            background-color: #333333;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 15px;
+            flex: 1;
+            min-width: 300px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #d0d0d0;
+            border-radius: 4px;
+            font-size: 16px;
+            background-color: #ffffff;
+            color: #000000;
+        }
+
+        input[type="text"]::placeholder {
+            color: #999999;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #666666;
+        }
+
+        .table-header {
+            background-color: #f5f5f5;
+            padding: 15px 20px;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+            border-radius: 4px 4px 0 0;
+            font-weight: 500;
+            color: #000000;
+            margin-bottom: 0;
+        }
+
+        .table-header>div {
+            text-align: center;
+        }
+
+        .total-marketers {
+            padding: 15px 20px;
+            text-align: right;
+            color: #000000;
+            font-size: 16px;
+            background-color: #ffffff;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .content-area {
+            background-color: #ffffff;
+        }
+
+        .marketer-row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            align-items: center;
+        }
+
+        .marketer-row>div {
+            text-align: center;
+        }
+
+        .marketer-row .name {
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .marketer-row .link {
+            word-break: break-all;
+            color: #0066cc;
+            text-align: center;
+        }
+
+        .marketer-row .actions {
+            justify-content: center;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .action-btn:hover {
+            background-color: #f0f0f0;
+        }
+
+        .action-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .edit-btn svg {
+            color: #0066cc;
+        }
+
+        .delete-btn-icon svg {
+            color: #ff4444;
+        }
+
+        .add-sale-btn {
+            background-color: #22c55e;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .add-sale-btn:hover {
+            background-color: #16a34a;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(34, 197, 94, 0.3);
+        }
+
+        .remove-sale-btn {
+            background-color: #ef4444;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .remove-sale-btn:hover {
+            background-color: #dc2626;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+        }
+
+        .remove-sale-btn:disabled {
+            background-color: #d1d5db;
+            color: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .sales-section {
+            margin-top: 25px;
+            padding-top: 25px;
+            border-top: 2px solid #e5e7eb;
+        }
+
+        .sales-info {
+            background-color: #f9fafb;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .sales-info label {
+            display: block;
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 5px;
+        }
+
+        .sales-info strong {
+            font-size: 24px;
+            color: #111827;
+            font-weight: 600;
+        }
+
+        .sales-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            min-width: 400px;
+            max-width: 90%;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .modal-content .form-group {
+            margin-bottom: 15px;
+        }
+
+        .modal-content label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #d0d0d0;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: flex-start;
+        }
+
+        .modal-buttons button {
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+        }
+
+        .save-btn {
+            background-color: #000000;
+            color: #ffffff;
+        }
+
+        .save-btn:hover {
+            background-color: #333333;
+        }
+
+        .cancel-btn {
+            background-color: #e0e0e0;
+            color: #000000;
+        }
+
+        .cancel-btn:hover {
+            background-color: #d0d0d0;
+        }
+
+        /* Price edit button - fixed bottom right */
+        .price-edit-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #22c55e;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s;
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+        }
+
+        .price-edit-btn:hover {
+            background-color: #16a34a;
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+            transform: scale(1.05);
+        }
+
+        .price-edit-btn svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .price-display {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            z-index: 998;
+            white-space: nowrap;
+        }
+
+        input[type="number"] {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #d0d0d0;
+            border-radius: 4px;
+            font-size: 16px;
+            background-color: #ffffff;
+            color: #000000;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #666666;
+        }
+
+        @media (max-width: 768px) {
+            .add-marketer-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .input-group {
+                flex-direction: column;
+                min-width: 100%;
+            }
+
+            .add-button {
+                width: 100%;
+            }
+
+            .table-header,
+            .marketer-row {
+                grid-template-columns: 1fr;
+                gap: 10px;
+                font-size: 14px;
+            }
+
+            .modal-content {
+                min-width: 90%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>ניהול משווקים</h1>
+
+        <div class="add-marketer-section">
+            <button class="add-button" onclick="addMarketer()">הוסף משווק</button>
+            <div class="input-group">
+                <input type="text" id="marketerName" placeholder="שם המשווק החדש">
+                <input type="text" id="referralLink" placeholder="קישור הפניה">
+            </div>
+        </div>
+
+        <div class="table-header">
+            <div>שם</div>
+            <div>קישור הפניה</div>
+            <div>מכירות</div>
+            <div>רווח עמלה</div>
+            <div>פעולות</div>
+        </div>
+
+        <div class="content-area" id="marketersList">
+            <!-- Marketer rows will be added here dynamically -->
+        </div>
+
+        <div class="total-marketers">
+            סה"כ משווקים: <span id="totalCount">0</span>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <h2>עריכת משווק</h2>
+            <div class="form-group">
+                <label>שם המשווק</label>
+                <input type="text" id="editName">
+            </div>
+            <div class="form-group">
+                <label>קישור הפניה</label>
+                <input type="text" id="editLink">
+            </div>
+            <div class="sales-section">
+                <div class="sales-info">
+                    <label>מכירות נוכחיות</label>
+                    <strong id="currentSales">0</strong>
+                </div>
+                <div class="sales-buttons">
+                    <button class="add-sale-btn" onclick="addSaleFromModal()">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                            style="width: 18px; height: 18px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        הוסף מכירה
+                    </button>
+                    <button class="remove-sale-btn" onclick="removeSaleFromModal()" id="removeSaleBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                            style="width: 18px; height: 18px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+                        </svg>
+                        הורד מכירה
+                    </button>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="save-btn" onclick="saveEdit()">שמור</button>
+                <button class="cancel-btn" onclick="closeModal()">ביטול</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Price Edit Modal -->
+    <div class="modal" id="priceModal">
+        <div class="modal-content">
+            <h2>תמחור המוצר</h2>
+            <div class="form-group">
+                <label>מחיר המוצר (ש"ח)</label>
+                <input type="number" id="editPrice" min="0" step="0.01">
+            </div>
+            <div class="modal-buttons">
+                <button class="save-btn" onclick="savePrice()">שמור</button>
+                <button class="cancel-btn" onclick="closePriceModal()">ביטול</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Price Edit Button -->
+    <button class="price-edit-btn" onclick="openPriceModal()" title="עריכת תמחור המוצר">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+        </svg>
+    </button>
+
+    <!-- Price Display -->
+    <div class="price-display" id="priceDisplay">
+        מחיר מוצר: <span id="currentPrice">297</span>₪
+    </div>
+
+    <script>
+        let marketers = [];
+        let editingId = null;
+        let PRODUCT_PRICE = 297;
+        const COMMISSION_RATE = 0.5; // 50%
+
+        // Update price display
+        function updatePriceDisplay() {
+            document.getElementById('currentPrice').textContent = PRODUCT_PRICE;
+        }
+
+        function openPriceModal() {
+            document.getElementById('editPrice').value = PRODUCT_PRICE;
+            document.getElementById('priceModal').classList.add('active');
+        }
+
+        function closePriceModal() {
+            document.getElementById('priceModal').classList.remove('active');
+        }
+
+        function savePrice() {
+            const newPrice = parseFloat(document.getElementById('editPrice').value);
+            if (isNaN(newPrice) || newPrice < 0) {
+                alert('אנא הכנס מחיר תקין');
+                return;
+            }
+            PRODUCT_PRICE = newPrice;
+            updatePriceDisplay();
+            closePriceModal();
+        }
+
+        function addMarketer() {
+            const name = document.getElementById('marketerName').value.trim();
+            const link = document.getElementById('referralLink').value.trim();
+
+            if (!name || !link) {
+                alert('אנא מלא את כל השדות');
+                return;
+            }
+
+            const marketer = {
+                id: Date.now(),
+                name: name,
+                link: link,
+                sales: 0,
+                commission: 0
+            };
+
+            marketers.push(marketer);
+            updateDisplay();
+
+            // Clear inputs
+            document.getElementById('marketerName').value = '';
+            document.getElementById('referralLink').value = '';
+        }
+
+        function deleteMarketer(id) {
+            if (confirm('האם אתה בטוח שברצונך למחוק את המשווק?')) {
+                marketers = marketers.filter(m => m.id !== id);
+                updateDisplay();
+            }
+        }
+
+        function editMarketer(id) {
+            const marketer = marketers.find(m => m.id === id);
+            if (marketer) {
+                editingId = id;
+                document.getElementById('editName').value = marketer.name;
+                document.getElementById('editLink').value = marketer.link;
+                document.getElementById('editModal').classList.add('active');
+                updateSalesDisplay();
+            }
+        }
+
+        function addSaleFromModal() {
+            if (editingId !== null) {
+                addSale(editingId);
+                updateSalesDisplay();
+            }
+        }
+
+        function removeSaleFromModal() {
+            if (editingId !== null) {
+                const marketer = marketers.find(m => m.id === editingId);
+                if (marketer && marketer.sales > 0) {
+                    marketer.sales -= 1;
+                    // Recalculate commission based on current sales
+                    marketer.commission = marketer.sales * PRODUCT_PRICE * COMMISSION_RATE;
+                    updateDisplay();
+                    updateSalesDisplay();
+                }
+            }
+        }
+
+        function updateSalesDisplay() {
+            const marketer = marketers.find(m => m.id === editingId);
+            if (marketer) {
+                document.getElementById('currentSales').textContent = marketer.sales;
+                const removeBtn = document.getElementById('removeSaleBtn');
+                removeBtn.disabled = marketer.sales === 0;
+            }
+        }
+
+        function removeSale(id) {
+            const marketer = marketers.find(m => m.id === id);
+            if (marketer && marketer.sales > 0) {
+                marketer.sales -= 1;
+                // Recalculate commission based on current sales
+                marketer.commission = marketer.sales * PRODUCT_PRICE * COMMISSION_RATE;
+                updateDisplay();
+            }
+        }
+
+        function saveEdit() {
+            const name = document.getElementById('editName').value.trim();
+            const link = document.getElementById('editLink').value.trim();
+
+            if (!name || !link) {
+                alert('אנא מלא את כל השדות');
+                return;
+            }
+
+            const marketer = marketers.find(m => m.id === editingId);
+            if (marketer) {
+                marketer.name = name;
+                marketer.link = link;
+                updateDisplay();
+                closeModal();
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('editModal').classList.remove('active');
+            editingId = null;
+        }
+
+        function addSale(id) {
+            const marketer = marketers.find(m => m.id === id);
+            if (marketer) {
+                marketer.sales += 1;
+                marketer.commission += PRODUCT_PRICE * COMMISSION_RATE;
+                updateDisplay();
+            }
+        }
+
+        function updateDisplay() {
+            const listContainer = document.getElementById('marketersList');
+            const totalCount = document.getElementById('totalCount');
+
+            totalCount.textContent = marketers.length;
+
+            if (marketers.length === 0) {
+                listContainer.innerHTML = '';
+                return;
+            }
+
+            listContainer.innerHTML = marketers.map(marketer => `
+                <div class="marketer-row">
+                    <div class="name">${marketer.name}</div>
+                    <div class="link">${marketer.link}</div>
+                    <div>${marketer.sales}</div>
+                    <div>${marketer.commission.toFixed(2)}₪</div>
+                    <div class="actions">
+                        <button class="action-btn edit-btn" onclick="editMarketer(${marketer.id})" title="עריכה">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                        </button>
+                        <button class="action-btn delete-btn-icon" onclick="deleteMarketer(${marketer.id})" title="מחיקה">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Allow Enter key to add marketer
+        document.getElementById('marketerName').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                addMarketer();
+            }
+        });
+
+        document.getElementById('referralLink').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                addMarketer();
+            }
+        });
+
+        // Close modal when clicking outside
+        document.getElementById('editModal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        document.getElementById('priceModal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closePriceModal();
+            }
+        });
+
+        // Initialize price display
+        updatePriceDisplay();
+    </script>
+</body>
+
+</html>
